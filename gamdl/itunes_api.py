@@ -6,7 +6,13 @@ from gamdl.constants import *
 
 
 class ItunesApi:
-    def __init__(self, storefront: str = "us", language: str = "en-US"):
+    def __init__(
+        self,
+        storefront: str = "us",
+        language: str = "en-US",
+        *args,
+        **kwargs,
+    ):
         self.storefront = storefront
         self.language = language
         self._setup_session()
@@ -16,24 +22,36 @@ class ItunesApi:
         if not self.storefront_id:
             raise Exception(f"No storefront id for {self.storefront}")
         self.session = Session()
-        self.session.params = {"country": self.storefront, "lang": self.language}
+        self.session.params = {
+            "country": self.storefront,
+            "lang": self.language,
+        }
         self.session.headers = {
-            "X-Apple-Store-Front": f"{self.storefront_id} t:music31"
+            "X-Apple-Store-Front": f"{self.storefront_id} t:music31",
         }
 
-    def get_resource(self, params: dict) -> dict:
+    def get_resource(
+        self,
+        params: dict,
+    ) -> dict:
         response = self.session.get(
-            URL_API_LOOKUP,
+            LOOKUP_API_URL,
             params=params,
         )
         if response.status_code != 200:
-            raise Exception(f"Failed to get resource:\n{response.text}")
+            raise Exception(f"Failed to get resource for {params}:\n{response.text}")
         return response.json()
 
-    def get_resource_itunes_page(self, resource_type: str, resource_id: str) -> dict:
+    def get_itunes_page(
+        self,
+        resource_type: str,
+        resource_id: str,
+    ) -> dict:
         response = self.session.get(
-            f"{URL_API_ITUNES_PAGE}/{resource_type}/{resource_id}"
+            f"{ITUNES_PAGE_API_URL}/{resource_type}/{resource_id}"
         )
         if response.status_code != 200:
-            raise Exception(f"Failed to get resource iTunes page:\n{response.text}")
+            raise Exception(
+                f"Failed to get itunes page for {resource_id}:\n{response.text}"
+            )
         return response.json()

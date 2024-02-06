@@ -15,6 +15,8 @@ class AppleMusicApi:
         cookies_location: Path = None,
         storefront: str = "us",
         language: str = "en-US",
+        *args,
+        **kwargs,
     ):
         self.cookies_location = cookies_location
         self.storefront = storefront
@@ -44,25 +46,29 @@ class AppleMusicApi:
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
-                "origin": URL_APPLE_MUSIC_HOMEPAGE,
+                "origin": APPLE_MUSIC_HOMEPAGE_URL,
             }
         )
-        home_page = self.session.get(URL_APPLE_MUSIC_HOMEPAGE).text
-        index_js_uri = re.search(r"/(assets/index-legacy-[^/]+\.js)", home_page).group(
-            1
-        )
+        home_page = self.session.get(APPLE_MUSIC_HOMEPAGE_URL).text
+        index_js_uri = re.search(
+            r"/(assets/index-legacy-[^/]+\.js)",
+            home_page,
+        ).group(1)
         index_js_page = self.session.get(
-            f"{URL_APPLE_MUSIC_HOMEPAGE}/{index_js_uri}"
+            f"{APPLE_MUSIC_HOMEPAGE_URL}/{index_js_uri}"
         ).text
         token = re.search('(?=eyJh)(.*?)(?=")', index_js_page).group(1)
         self.session.headers.update({"authorization": f"Bearer {token}"})
         self.session.params = {"l": self.language}
 
     def _get_resource(
-        self, resource_type: str, resource_id: str, params: dict = None
+        self,
+        resource_type: str,
+        resource_id: str,
+        params: dict = None,
     ) -> dict:
         response = self.session.get(
-            f"{URL_API_CATALOG}/{self.storefront}/{resource_type}/{resource_id}",
+            f"{CATALOG_API_URL}/{self.storefront}/{resource_type}/{resource_id}",
             params=params,
         )
         if (
@@ -70,42 +76,85 @@ class AppleMusicApi:
             or not response.json().get("data")
             or not response.json()["data"][0].get("attributes")
         ):
-            raise Exception(f"Failed to get resource:\n{response.text}")
+            raise Exception(
+                f"Failed to get resource for {resource_id}:\n{response.text}"
+            )
         return response.json()["data"][0]
 
     def get_song(
-        self, song_id: str, extend: str = "extendedAssetUrls", include: str = "lyrics"
+        self,
+        song_id: str,
+        extend: str = "extendedAssetUrls",
+        include: str = "lyrics",
     ) -> dict:
         return self._get_resource(
-            "songs", song_id, {"extend": extend, "include": include}
+            "songs",
+            song_id,
+            {
+                "extend": extend,
+                "include": include,
+            },
         )
 
-    def get_music_video(self, music_video_id: str) -> dict:
+    def get_music_video(
+        self,
+        music_video_id: str,
+    ) -> dict:
         return self._get_resource("music-videos", music_video_id)
 
-    def get_album(self, album_id: str) -> dict:
-        return self._get_resource("albums", album_id)
-
-    def get_playlist(self, playlist_id: str, limit_tracks: int = 300) -> dict:
+    def get_album(
+        self,
+        album_id: str,
+        extend: str = "extendedAssetUrls",
+    ) -> dict:
         return self._get_resource(
-            "playlists", playlist_id, {"limit[tracks]": limit_tracks}
+            "albums",
+            album_id,
+            {
+                "extend": extend,
+            },
         )
 
-    def get_webplayback(self, track_id: str) -> dict:
+    def get_playlist(
+        self,
+        playlist_id: str,
+        limit_tracks: int = 300,
+        extend: str = "extendedAssetUrls",
+    ) -> dict:
+        return self._get_resource(
+            "playlists",
+            playlist_id,
+            {
+                "limit[tracks]": limit_tracks,
+                "extend": extend,
+            },
+        )
+
+    def get_webplayback(
+        self,
+        track_id: str,
+    ) -> dict:
         response = self.session.post(
-            URL_API_WEBPLAYBACK,
+            WEBPLAYBACK_API_URL,
             json={
                 "salableAdamId": track_id,
                 "language": self.language,
             },
         )
         if response.status_code != 200 or not response.json().get("songList"):
-            raise Exception(f"Failed to get webplayback:\n{response.text}")
+            raise Exception(
+                f"Failed to get webplayback for {track_id}:\n{response.text}"
+            )
         return response.json()["songList"][0]
 
-    def get_license(self, challenge: str, track_uri: str, track_id: str) -> str:
+    def get_license(
+        self,
+        track_id: str,
+        track_uri: str,
+        challenge: str,
+    ) -> str:
         response = self.session.post(
-            URL_API_LICENSE,
+            LICENSE_API_URL,
             json={
                 "challenge": challenge,
                 "key-system": "com.widevine.alpha",
@@ -116,5 +165,5 @@ class AppleMusicApi:
             },
         )
         if response.status_code != 200 or not response.json().get("license"):
-            raise Exception(f"Failed to get license:\n{response.text}")
+            raise Exception(f"Failed to get license for {track_id}:\n{response.text}")
         return response.json()["license"]

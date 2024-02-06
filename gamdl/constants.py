@@ -1,13 +1,13 @@
-URL_APPLE_MUSIC_HOMEPAGE = "https://beta.music.apple.com"
-URL_API_CATALOG = "https://amp-api.music.apple.com/v1/catalog"
-URL_API_WEBPLAYBACK = (
+APPLE_MUSIC_HOMEPAGE_URL = "https://beta.music.apple.com"
+CATALOG_API_URL = "https://amp-api.music.apple.com/v1/catalog"
+WEBPLAYBACK_API_URL = (
     "https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/webPlayback"
 )
-URL_API_LICENSE = (
+LICENSE_API_URL = (
     "https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/acquireWebPlaybackLicense"
 )
-URL_API_LOOKUP = "https://itunes.apple.com/lookup"
-URL_API_ITUNES_PAGE = "https://music.apple.com"
+LOOKUP_API_URL = "https://itunes.apple.com/lookup"
+ITUNES_PAGE_API_URL = "https://music.apple.com"
 STOREFRONT_IDS = {
     "AE": "143481-2,32",
     "AG": "143540-2,32",
